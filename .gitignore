@@ -19,5 +19,6 @@ CMakeUserPresets.json
 # fixtures live in tests/data/; real captures are fetched here and stay out.
 testdata/capture/
 venues/*/schema.xml
-# The reference venue's schema is ours — synthetic, and needed to build.
+# The two reference venues' schemas are ours — synthetic, and needed to build.
 !venues/ref/schema.xml
+!venues/alt/schema.xml
