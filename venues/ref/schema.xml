@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reference venue SBE schema — a synthetic, MDP 3.0-shaped message set used to
+  develop and test the core before any real venue hands over its schema.
+
+  This file is the single source of truth for the layouts hand-decoded in
+  venues/ref/ref_venue.hpp + src/ref_codec.cpp. Once cmake/Sbe.cmake is pointed
+  at a JVM and the SBE tool jar, `-DRFEED_REGENERATE_SBE=ON` generates real
+  codecs from this file and the hand-written ones are deleted.
+
+  Note the groupSize composite: numInGroup is uint8, matching CME. A venue that
+  uses uint16 here changes RefVenue::kGroupCountBytes and nothing else.
+-->
+<sbe:messageSchema xmlns:sbe="http://fixprotocol.io/2016/sbe"
+                   package="rfeed_gen_ref"
+                   id="1"
+                   version="13"
+                   semanticVersion="FIX5SP2"
+                   description="Reference MDP 3.0-shaped schema for rfeed development"
+                   byteOrder="littleEndian">
+
+  <types>
+    <composite name="messageHeader" description="SBE message header">
+      <type name="blockLength" primitiveType="uint16"/>
+      <type name="templateId"  primitiveType="uint16"/>
+      <type name="schemaId"    primitiveType="uint16"/>
+      <type name="version"     primitiveType="uint16"/>
+    </composite>
+
+    <composite name="groupSize" description="Repeating group dimensions">
+      <type name="blockLength" primitiveType="uint16"/>
+      <type name="numInGroup"  primitiveType="uint8" minValue="0" maxValue="255"/>
+    </composite>
+
+    <type name="PRICE9"     primitiveType="int64"  minValue="-9223372036854775807"/>
+    <type name="Quantity"   primitiveType="int64"/>
+    <type name="SecurityID" primitiveType="int32"/>
+    <type name="RptSeq"     primitiveType="uint32"/>
+    <type name="SeqNum"     primitiveType="uint32"/>
+    <type name="uInt64NS"   primitiveType="uint64" description="ns since epoch"/>
+    <type name="Symbol20"   primitiveType="char" length="20" characterEncoding="US-ASCII"/>
+    <type name="padding1"   primitiveType="uint8" length="1"/>
+    <type name="padding2"   primitiveType="uint8" length="2"/>
+    <type name="padding3"   primitiveType="uint8" length="3"/>
+
+    <enum name="MDUpdateAction" encodingType="uint8">
+      <validValue name="New">0</validValue>
+      <validValue name="Change">1</validValue>
+      <validValue name="Delete">2</validValue>
+      <validValue name="DeleteThru">3</validValue>
+      <validValue name="DeleteFrom">4</validValue>
+      <validValue name="Overlay">5</validValue>
+    </enum>
+
+    <enum name="MDEntryType" encodingType="char">
+      <validValue name="Bid">0</validValue>
+      <validValue name="Offer">1</validValue>
+      <validValue name="Trade">2</validValue>
+      <validValue name="ImpliedBid">E</validValue>
+      <validValue name="ImpliedOffer">F</validValue>
+    </enum>
+
+    <enum name="SecurityTradingStatus" encodingType="uint8">
+      <validValue name="TradingHalt">2</validValue>
+      <validValue name="Close">4</validValue>
+      <validValue name="ReadyToTrade">17</validValue>
+      <validValue name="NotAvailableForTrading">18</validValue>
+      <validValue name="PreOpen">21</validValue>
+    </enum>
+
+    <enum name="ResetKind" encodingType="uint8">
+      <validValue name="Intraday">0</validValue>
+      <validValue name="PeriodStart">1</validValue>
+    </enum>
+
+    <set name="MatchEventIndicator" encodingType="uint8">
+      <choice name="EndOfEvent">0</choice>
+      <choice name="RecoveryMsg">1</choice>
+    </set>
+  </types>
+
+  <sbe:message name="ChannelReset" id="4" blockLength="12">
+    <field name="TransactTime" id="60"    type="uInt64NS"/>
+    <field name="Kind"         id="30001" type="ResetKind"/>
+    <field name="Padding"      id="30002" type="padding3"/>
+  </sbe:message>
+
+  <sbe:message name="AdminHeartbeat" id="12" blockLength="0"/>
+
+  <sbe:message name="SecurityStatus" id="30" blockLength="16">
+    <field name="SecurityID"    id="48"  type="SecurityID"/>
+    <field name="TransactTime"  id="60"  type="uInt64NS"/>
+    <field name="TradingStatus" id="326" type="SecurityTradingStatus"/>
+    <field name="Padding"       id="30003" type="padding3"/>
+  </sbe:message>
+
+  <sbe:message name="MDIncrementalRefreshBook" id="46" blockLength="9">
+    <field name="TransactTime"        id="60"   type="uInt64NS"/>
+    <field name="MatchEventIndicator" id="5799" type="MatchEventIndicator"/>
+    <group name="MDEntries" id="268" blockLength="32" dimensionType="groupSize">
+      <field name="MDEntryPx"      id="270" type="PRICE9"/>
+      <field name="MDEntrySize"    id="271" type="Quantity"/>
+      <field name="SecurityID"     id="48"  type="SecurityID"/>
+      <field name="RptSeq"         id="83"  type="RptSeq"/>
+      <field name="NumberOfOrders" id="346" type="SecurityID"/>
+      <field name="MDPriceLevel"   id="1023" type="padding1"/>
+      <field name="MDUpdateAction" id="279" type="MDUpdateAction"/>
+      <field name="MDEntryType"    id="269" type="MDEntryType"/>
+      <field name="Padding"        id="30004" type="padding1"/>
+    </group>
+  </sbe:message>
+
+  <sbe:message name="MDSnapshotFullRefresh" id="52" blockLength="26">
+    <field name="LastMsgSeqNumProcessed" id="369" type="SeqNum"/>
+    <field name="TotNumReports"          id="911" type="RptSeq"/>
+    <field name="SecurityID"             id="48"  type="SecurityID"/>
+    <field name="RptSeq"                 id="83"  type="RptSeq"/>
+    <field name="TransactTime"           id="60"  type="uInt64NS"/>
+    <field name="TradingStatus"          id="326" type="SecurityTradingStatus"/>
+    <field name="Padding"                id="30005" type="padding1"/>
+    <group name="MDEntries" id="268" blockLength="24" dimensionType="groupSize">
+      <field name="MDEntryPx"      id="270" type="PRICE9"/>
+      <field name="MDEntrySize"    id="271" type="Quantity"/>
+      <field name="NumberOfOrders" id="346" type="SecurityID"/>
+      <field name="MDPriceLevel"   id="1023" type="padding1"/>
+      <field name="MDEntryType"    id="269" type="MDEntryType"/>
+      <field name="Padding"        id="30006" type="padding2"/>
+    </group>
+  </sbe:message>
+
+  <sbe:message name="MDInstrumentDefinition" id="54" blockLength="40">
+    <field name="SecurityID"         id="48"  type="SecurityID"/>
+    <field name="Symbol"             id="55"  type="Symbol20"/>
+    <field name="MinPriceIncrement"  id="969" type="PRICE9"/>
+    <field name="TotNumReports"      id="911" type="RptSeq"/>
+    <field name="MarketDepth"        id="264" type="padding1"/>
+    <field name="SubTickDivisor"     id="30007" type="padding1"/>
+    <field name="Padding"            id="30008" type="padding2"/>
+  </sbe:message>
+
+</sbe:messageSchema>

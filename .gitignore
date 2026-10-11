@@ -1,0 +1,23 @@
+build/
+build-*/
+cmake-build-*/
+.cache/
+compile_commands.json
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.exe
+.idea/
+.vscode/
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+
+# Venue captures and schemas are generally not redistributable. Synthetic
+# fixtures live in tests/data/; real captures are fetched here and stay out.
+testdata/capture/
+venues/*/schema.xml
+# The reference venue's schema is ours — synthetic, and needed to build.
+!venues/ref/schema.xml
